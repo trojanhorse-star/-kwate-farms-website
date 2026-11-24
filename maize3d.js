@@ -99,6 +99,69 @@ if (canvas && host && !window.matchMedia("(prefers-reduced-motion: reduce)").mat
     }
     product.add(kernels);
 
+
+    // Additional illustrative product scenes: dairy and harvested grains.
+    // These visuals communicate business categories, not a verified live stock list.
+    const dairyGroup = new THREE.Group();
+    scene.add(dairyGroup);
+    const bottleMat = new THREE.MeshPhysicalMaterial({ color: 0xf0eee0, roughness: 0.2, metalness: 0.0, clearcoat: 0.9, clearcoatRoughness: 0.12 });
+    const milkMat = new THREE.MeshStandardMaterial({ color: 0xf8f3df, roughness: 0.28 });
+    const bottleProfile = [
+      new THREE.Vector2(0.02,-1.2),new THREE.Vector2(0.34,-1.2),new THREE.Vector2(0.4,-1.08),
+      new THREE.Vector2(0.4,0.45),new THREE.Vector2(0.37,0.62),new THREE.Vector2(0.23,0.82),
+      new THREE.Vector2(0.16,0.92),new THREE.Vector2(0.15,1.2),new THREE.Vector2(0.02,1.2)
+    ];
+    const bottle = new THREE.Mesh(new THREE.LatheGeometry(bottleProfile,48),bottleMat);
+    bottle.castShadow=true; bottle.receiveShadow=true; dairyGroup.add(bottle);
+    const milkFill = new THREE.Mesh(new THREE.CylinderGeometry(0.335,0.36,1.35,40),milkMat);
+    milkFill.position.y=-0.36; dairyGroup.add(milkFill);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.155,0.16,0.28,32),bottleMat);
+    neck.position.y=1.18; dairyGroup.add(neck);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,0.13,32),new THREE.MeshStandardMaterial({color:0x42613d,roughness:0.55}));
+    cap.position.y=1.38; dairyGroup.add(cap);
+    const labelCanvas=document.createElement("canvas"); labelCanvas.width=512; labelCanvas.height=256;
+    const ctx=labelCanvas.getContext("2d");
+    ctx.fillStyle="#f1e8d0";ctx.fillRect(0,0,512,256);
+    ctx.fillStyle="#24452f";ctx.textAlign="center";ctx.font="bold 42px Georgia";ctx.fillText("KWATE FARMS",256,105);
+    ctx.font="26px Arial";ctx.fillText("DAIRY",256,155);
+    const labelTex=new THREE.CanvasTexture(labelCanvas);labelTex.colorSpace=THREE.SRGBColorSpace;
+    const label=new THREE.Mesh(new THREE.CylinderGeometry(0.405,0.405,0.56,48,1,true),new THREE.MeshStandardMaterial({map:labelTex,roughness:0.7}));
+    label.position.y=-0.2; dairyGroup.add(label);
+
+    const grainsGroup = new THREE.Group();
+    scene.add(grainsGroup);
+    const sackMat = new THREE.MeshStandardMaterial({color:0xb49a6a,roughness:0.98});
+    const sackProfile=[new THREE.Vector2(0.03,-1.05),new THREE.Vector2(0.48,-1.05),new THREE.Vector2(0.58,-0.8),new THREE.Vector2(0.62,-0.1),new THREE.Vector2(0.53,0.68),new THREE.Vector2(0.42,0.82),new THREE.Vector2(0.04,0.82)];
+    const sack=new THREE.Mesh(new THREE.LatheGeometry(sackProfile,48),sackMat);
+    sack.castShadow=true;sack.receiveShadow=true;grainsGroup.add(sack);
+    const rimSack=new THREE.Mesh(new THREE.TorusGeometry(0.43,0.075,12,48),new THREE.MeshStandardMaterial({color:0x786343,roughness:1}));
+    rimSack.rotation.x=Math.PI/2;rimSack.position.y=0.79;grainsGroup.add(rimSack);
+    const seedGeo=new THREE.SphereGeometry(0.075,10,8);
+    const seedMats=[0xd8b65f,0xc6a45a,0xe3ca83].map(color=>new THREE.MeshStandardMaterial({color,roughness:0.78}));
+    for(let i=0;i<34;i++){
+      const seed=new THREE.Mesh(seedGeo,seedMats[i%seedMats.length]);
+      const a=i*2.399, r=0.13+((i*7)%13)/100;
+      seed.position.set(Math.cos(a)*r,0.86+(i%5)*0.045,Math.sin(a)*r);
+      seed.scale.set(1.15,0.72,0.72);seed.rotation.z=a;grainsGroup.add(seed);
+    }
+    // Groundnut pods as a secondary crop detail beside the grain sack.
+    const podMat=new THREE.MeshStandardMaterial({color:0x9a7546,roughness:0.94});
+    for(let i=0;i<7;i++){
+      const pod=new THREE.Mesh(new THREE.CapsuleGeometry(0.105,0.34,5,10),podMat);
+      const a=i*2.4;pod.position.set(Math.cos(a)*0.62,-0.88,Math.sin(a)*0.62);
+      pod.rotation.set(0.4,a,0.7);pod.scale.set(0.72,1,0.72);grainsGroup.add(pod);
+    }
+    dairyGroup.visible=false;
+    grainsGroup.visible=false;
+    const showcaseGroups=[product,dairyGroup,grainsGroup];
+    const showcaseLabels=[
+      ["FIELD CROPS","A HARVEST OF POSSIBILITIES"],
+      ["DAIRY","A CLOSER LOOK AT DAIRY VALUE"],
+      ["GRAINS & SEEDS","FROM HARVEST TO MARKET"]
+    ];
+    const caption=host.querySelector(".stage-caption");
+    const stageCount=host.querySelector(".stage-orbit");
+
     const floor = new THREE.Mesh(new THREE.CircleGeometry(1.9, 64), new THREE.MeshBasicMaterial({ color: 0x14271b, transparent: true, opacity: 0.16 }));
     floor.rotation.x = -Math.PI / 2; floor.position.y = -1.72; floor.scale.set(1.45, 0.52, 1);
     scene.add(floor);
@@ -141,7 +204,7 @@ if (canvas && host && !window.matchMedia("(prefers-reduced-motion: reduce)").mat
     function animate(now) {
       requestAnimationFrame(animate);
       const t = (now - start) / 1000;
-      const reveal = THREE.MathUtils.smoothstep(t, 0.35, 3.1);
+      const reveal = THREE.MathUtils.smoothstep(t, 0.35, 3.1);\n      const active = Math.floor(t / 6.5) % showcaseGroups.length;\n      showcaseGroups.forEach((group,index)=>{\n        const target=index===active?1:0;\n        const current=group.userData.fade??(index===0?1:0);\n        group.userData.fade=THREE.MathUtils.damp(current,target,4,1/60);\n        group.visible=group.userData.fade>0.015;\n        group.scale.setScalar(Math.max(0.001,group.userData.fade));\n        if(index!==0){group.rotation.y=t*0.22+(index*0.5);group.position.y=Math.sin(t*0.8+index)*0.045;}\n      });\n      if(caption){caption.querySelector("span").textContent=showcaseLabels[active][0];caption.querySelector("b").textContent=showcaseLabels[active][1];}\n      if(stageCount)stageCount.innerHTML=String(active+1).padStart(2,"0")+' <i>—</i> 03';
       for (let i = 0; i < kernels.count; i++) {
         const m = new THREE.Matrix4();
         kernels.getMatrixAt(i, m);
